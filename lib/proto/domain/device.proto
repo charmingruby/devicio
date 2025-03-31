@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package domain;
+
+option go_package = "lib/proto/gen/pb";
+
+import "google/protobuf/timestamp.proto";
+
+enum DeviceStatus {
+    UNSPECIFIED = 0;
+    HEALTHY = 1;
+    WARNING = 2;
+    ERROR = 3;
+    CRITICAL = 4;
+}
+
+message DeviceRoutine {
+    string id = 1;
+    string device_id = 2;
+    DeviceStatus status = 3;
+    string context = 4;
+    repeated string diagnostics = 5;
+    string area = 6;
+    google.protobuf.Timestamp sourced_created_at = 7;
+};
