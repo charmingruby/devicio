@@ -18,7 +18,7 @@ message DeviceRoutine {
     string id = 1;
     DeviceStatus status = 2;
     string context = 3;
-    repeated string diagnostics = 4;
+    string diagnostics = 4;
     string area = 5;
-    google.protobuf.Timestamp sourced_created_at = 6;
+    google.protobuf.Timestamp dispatched_at = 6;
 };

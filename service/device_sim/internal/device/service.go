@@ -40,18 +40,18 @@ func (s *Service) DispatchRoutineMessage(ctx context.Context, device Device) err
 	timestamp := timestamppb.New(now)
 
 	routine := &pb.DeviceRoutine{
-		Id:               device.ID,
-		Status:           getRandomStatus(),
-		Context:          "routine",
-		Diagnostics:      getRandomDiagnostics(),
-		Area:             getRandomArea(),
-		SourcedCreatedAt: timestamp,
+		Id:           device.ID,
+		Status:       getRandomStatus(),
+		Context:      "routine",
+		Diagnostics:  getRandomDiagnostic(),
+		Area:         getRandomArea(),
+		DispatchedAt: timestamp,
 	}
 
 	return s.queue.Publish(ctx, routine)
 }
 
-func getRandomDiagnostics() []string {
+func getRandomDiagnostic() string {
 	options := make([]string, len(diagnosticOptions))
 	copy(options, diagnosticOptions)
 
@@ -59,7 +59,7 @@ func getRandomDiagnostics() []string {
 		options[i], options[j] = options[j], options[i]
 	})
 
-	return options[:2]
+	return options[0]
 }
 
 func getRandomStatus() pb.DeviceStatus {

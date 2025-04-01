@@ -2,10 +2,13 @@ package device
 
 import "time"
 
-type Device struct {
-	ID   string
-	Name string
-	//... any other fields
-	Area      string
-	CreatedAt time.Time
+type Routine struct {
+	ID           string
+	DeviceID     string
+	Status       string
+	Context      string
+	Area         string
+	Diagnostics  string
+	DispatchedAt time.Time
+	CreatedAt    time.Time
 }

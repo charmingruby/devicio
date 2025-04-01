@@ -2,11 +2,17 @@ package main
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/charmingruby/devicio/lib/pkg/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/processor/config"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
+	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/pg"
+	"github.com/jmoiron/sqlx"
 )
 
 func main() {
@@ -27,5 +33,47 @@ func main() {
 		os.Exit(1)
 	}
 
-	device.NewService(queue)
+	db, err := pg.New(pg.ConnectionInput{
+		User:         cfg.DatabaseUser,
+		Password:     cfg.DatabasePassword,
+		Host:         cfg.DatabaseHost,
+		DatabaseName: cfg.DatabaseName,
+		SSL:          cfg.DatabaseSSL,
+	})
+	if err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	repo, err := postgres.NewRoutineRepository(db)
+	if err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	svc := device.NewService(queue, repo)
+
+	go func() {
+		if err := queue.Subscribe(svc.ProcessRoutine); err != nil {
+			logger.Log.Error(err.Error())
+			os.Exit(1)
+		}
+	}()
+
+	gracefulShutdown(queue, db)
+}
+
+func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+
+	<-stopChan
+	logger.Log.Info("shutting down gracefully...")
+
+	queue.Close()
+	db.Close()
+
+	time.Sleep(2 * time.Second)
+
+	logger.Log.Info("shutdown complete")
 }

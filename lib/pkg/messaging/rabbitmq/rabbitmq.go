@@ -73,7 +73,7 @@ func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
 	return nil
 }
 
-func (c *Client) Subscribe(handler func(proto.Message) error, msgType proto.Message) error {
+func (c *Client) Subscribe(handler func([]byte) error) error {
 	msgs, err := c.channel.Consume(c.cfg.QueueName, "", true, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe: %w", err)
@@ -81,13 +81,7 @@ func (c *Client) Subscribe(handler func(proto.Message) error, msgType proto.Mess
 
 	go func() {
 		for d := range msgs {
-			protoMsg := proto.Clone(msgType)
-			if err := proto.Unmarshal(d.Body, protoMsg); err != nil {
-				c.logger.Error(fmt.Sprintf("failed to unmarshal message: %v", err))
-				continue
-			}
-
-			if err := handler(protoMsg); err != nil {
+			if err := handler(d.Body); err != nil {
 				c.logger.Error(fmt.Sprintf("failed to handle message: %v", err))
 			}
 		}

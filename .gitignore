@@ -3,3 +3,6 @@
 
 # temporary files
 tmp
+
+# docker volumes
+.docker
