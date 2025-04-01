@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	URL            string
+	QueueName      string
 	MaxReconnects  int
 	ReconnectWait  time.Duration
 	ConnectTimeout time.Duration
@@ -19,6 +20,12 @@ type ConfigOption func(*Config)
 func WithURL(url string) ConfigOption {
 	return func(c *Config) {
 		c.URL = url
+	}
+}
+
+func WithQueueName(queueName string) ConfigOption {
+	return func(c *Config) {
+		c.QueueName = queueName
 	}
 }
 

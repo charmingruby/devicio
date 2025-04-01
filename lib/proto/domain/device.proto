@@ -16,10 +16,9 @@ enum DeviceStatus {
 
 message DeviceRoutine {
     string id = 1;
-    string device_id = 2;
-    DeviceStatus status = 3;
-    string context = 4;
-    repeated string diagnostics = 5;
-    string area = 6;
-    google.protobuf.Timestamp sourced_created_at = 7;
+    DeviceStatus status = 2;
+    string context = 3;
+    repeated string diagnostics = 4;
+    string area = 5;
+    google.protobuf.Timestamp sourced_created_at = 6;
 };
