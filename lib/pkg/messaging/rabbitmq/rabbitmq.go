@@ -57,11 +57,8 @@ func (c *Client) Close() {
 }
 
 func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
-	c.logger.Info("publishing message to RabbitMQ")
-
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("failed to marshal protobuf message: %v", err))
 		return fmt.Errorf("failed to marshal protobuf message: %w", err)
 	}
 
@@ -70,11 +67,8 @@ func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
 		Body:        data,
 	})
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("failed to publish message: %v", err))
 		return fmt.Errorf("failed to publish message: %w", err)
 	}
-
-	c.logger.Info("message published to RabbitMQ")
 
 	return nil
 }
