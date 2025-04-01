@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +12,7 @@ import (
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/observability"
 	"github.com/charmingruby/devicio/service/processor/pkg/pg"
 	"github.com/jmoiron/sqlx"
 )
@@ -19,6 +21,12 @@ func main() {
 	logger.New()
 
 	cfg, err := config.New()
+	if err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	cleanupTrace, err := observability.NewTracer(cfg.ServiceName)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
@@ -53,17 +61,20 @@ func main() {
 
 	svc := device.NewService(queue, repo)
 
+	ctx, span := observability.Tracer.Start(context.Background(), "main")
+	defer span.End()
+
 	go func() {
-		if err := queue.Subscribe(svc.ProcessRoutine); err != nil {
+		if err := queue.Subscribe(ctx, svc.ProcessRoutine); err != nil {
 			logger.Log.Error(err.Error())
 			os.Exit(1)
 		}
 	}()
 
-	gracefulShutdown(queue, db)
+	gracefulShutdown(queue, db, cleanupTrace)
 }
 
-func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
+func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB, cleanupTrace func() error) {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
@@ -71,7 +82,16 @@ func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
 	logger.Log.Info("shutting down gracefully...")
 
 	queue.Close()
-	db.Close()
+
+	if err := db.Close(); err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	if err := cleanupTrace(); err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
 
 	time.Sleep(2 * time.Second)
 

@@ -1,10 +1,12 @@
 package postgres
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/observability"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -56,13 +58,14 @@ func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
 	return stmt, nil
 }
 
-func (r *RoutineRepository) Store(routine *device.Routine) error {
+func (r *RoutineRepository) Store(ctx context.Context, routine *device.Routine) (context.Context, error) {
+	ctx, span := observability.Tracer.Start(ctx, "repository.RoutineRepository.Store")
+	defer span.End()
+
 	stmt, err := r.statement(createRoutine)
 	if err != nil {
-		return err
+		return ctx, err
 	}
-
-	fmt.Printf("%+v\n", routine)
 
 	if _, err := stmt.Exec(
 		routine.ID,
@@ -72,8 +75,8 @@ func (r *RoutineRepository) Store(routine *device.Routine) error {
 		routine.Area,
 		routine.DispatchedAt,
 	); err != nil {
-		return err
+		return ctx, err
 	}
 
-	return nil
+	return ctx, nil
 }

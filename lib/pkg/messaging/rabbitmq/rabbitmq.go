@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/charmingruby/devicio/lib/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/observability"
 	"github.com/streadway/amqp"
 	"google.golang.org/protobuf/proto"
 )
@@ -73,7 +74,10 @@ func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
 	return nil
 }
 
-func (c *Client) Subscribe(handler func([]byte) error) error {
+func (c *Client) Subscribe(ctx context.Context, handler func(context.Context, []byte) error) error {
+	ctx, span := observability.Tracer.Start(ctx, "queue.Subscribe")
+	defer span.End()
+
 	msgs, err := c.channel.Consume(c.cfg.QueueName, "", true, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe: %w", err)
@@ -81,7 +85,7 @@ func (c *Client) Subscribe(handler func([]byte) error) error {
 
 	go func() {
 		for d := range msgs {
-			if err := handler(d.Body); err != nil {
+			if err := handler(ctx, d.Body); err != nil {
 				c.logger.Error(fmt.Sprintf("failed to handle message: %v", err))
 			}
 		}

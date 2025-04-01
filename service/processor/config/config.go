@@ -14,6 +14,7 @@ type Config struct {
 	DatabaseHost      string `env:"DATABASE_HOST,required"`
 	DatabaseName      string `env:"DATABASE_NAME,required"`
 	DatabaseSSL       string `env:"DATABASE_SSL,required"`
+	ServiceName       string `env:"SERVICE_NAME,required"`
 }
 
 func New() (Config, error) {

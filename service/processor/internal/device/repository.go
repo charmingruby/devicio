@@ -1,5 +1,7 @@
 package device
 
+import "context"
+
 type RoutineRepository interface {
-	Store(r *Routine) error
+	Store(ctx context.Context, r *Routine) (context.Context, error)
 }
