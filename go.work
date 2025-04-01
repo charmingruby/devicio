@@ -2,6 +2,6 @@ go 1.23.2
 
 use (
 	./lib
-	./service/device
+	./service/device_sim
 	./service/processor
 )

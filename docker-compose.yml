@@ -1,22 +1,15 @@
-services:  
-  nats-server:
-    image: nats:latest
-    command: "-js -m 8222"
+services:
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    container_name: rabbitmq
     ports:
-      - "4222:4222"
-      - "8222:8222"
-      - "6222:6222"
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
     networks:
       - queue_network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8222/healthz" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    environment:
-      - NATS_DISABLE_PING_ARRAY_CLIENT=true
-      - NATS_NO_AUTH_USER=true
-      - NATS_JETSTREAM=true
 
 networks:
   queue_network:
