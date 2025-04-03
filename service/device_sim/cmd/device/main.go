@@ -7,10 +7,11 @@ import (
 	"os"
 	"sync"
 
-	"github.com/charmingruby/devicio/lib/pkg/messaging/rabbitmq"
+	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/device_sim/config"
 	"github.com/charmingruby/devicio/service/device_sim/internal/device"
 	"github.com/charmingruby/devicio/service/device_sim/pkg/logger"
+	"github.com/charmingruby/devicio/service/device_sim/pkg/observability"
 )
 
 func main() {
@@ -29,7 +30,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, &rabbitmq.Config{
+	if err := observability.NewTracer(cfg.ServiceName); err != nil {
+		logger.Log.Error(err.Error())
+		os.Exit(1)
+	}
+
+	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})

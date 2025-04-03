@@ -4,15 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/charmingruby/devicio/lib/pkg/core/id"
-	"github.com/charmingruby/devicio/lib/pkg/messaging/rabbitmq"
+	"github.com/charmingruby/devicio/lib/core/id"
+	"github.com/charmingruby/devicio/lib/messaging"
+	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/lib/proto/gen/pb"
 	"github.com/charmingruby/devicio/service/processor/pkg/observability"
 	"google.golang.org/protobuf/proto"
 )
 
 type Service struct {
-	queue *rabbitmq.Client
+	queue messaging.Queue
 	repo  RoutineRepository
 }
 
@@ -24,8 +25,8 @@ func NewService(queue *rabbitmq.Client, repo RoutineRepository) *Service {
 }
 
 func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
-	ctx, span := observability.Tracer.Start(ctx, "service.Service.ProcessRoutine")
-	defer span.End()
+	ctx, complete := observability.Tracer.Span(ctx, "service.Service.ProcessRoutine")
+	defer complete()
 
 	ctx, r, err := s.parseProcessRoutineData(ctx, msg)
 	if err != nil {
@@ -40,8 +41,8 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 }
 
 func (s *Service) parseProcessRoutineData(ctx context.Context, b []byte) (context.Context, *Routine, error) {
-	ctx, span := observability.Tracer.Start(ctx, "service.Service.parseProcessRoutineData")
-	defer span.End()
+	ctx, complete := observability.Tracer.Span(ctx, "service.Service.parseProcessRoutineData")
+	defer complete()
 
 	var p pb.DeviceRoutine
 

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	RabbitMQURL       string `env:"RABBITMQ_URL"`
 	RabbitMQQueueName string `env:"RABBITMQ_QUEUE_NAME"`
+	ServiceName       string `env:"SERVICE_NAME,required"`
 }
 
 func New() (Config, error) {

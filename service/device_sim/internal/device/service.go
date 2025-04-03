@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/charmingruby/devicio/lib/pkg/messaging/rabbitmq"
+	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	pb "github.com/charmingruby/devicio/lib/proto/gen/pb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

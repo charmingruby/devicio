@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/charmingruby/devicio/lib/pkg/messaging/rabbitmq"
+	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/processor/config"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
@@ -26,13 +26,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	cleanupTrace, err := observability.NewTracer(cfg.ServiceName)
-	if err != nil {
+	if err := observability.NewTracer(cfg.ServiceName); err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, &rabbitmq.Config{
+	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})
@@ -53,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	repo, err := postgres.NewRoutineRepository(db)
+	repo, err := postgres.NewRoutineRepository(db, observability.Tracer)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
@@ -61,8 +60,8 @@ func main() {
 
 	svc := device.NewService(queue, repo)
 
-	ctx, span := observability.Tracer.Start(context.Background(), "main")
-	defer span.End()
+	ctx, span := observability.Tracer.Span(context.Background(), "main")
+	defer span()
 
 	go func() {
 		if err := queue.Subscribe(ctx, svc.ProcessRoutine); err != nil {
@@ -71,10 +70,10 @@ func main() {
 		}
 	}()
 
-	gracefulShutdown(queue, db, cleanupTrace)
+	gracefulShutdown(queue, db)
 }
 
-func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB, cleanupTrace func() error) {
+func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
@@ -88,7 +87,7 @@ func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB, cleanupTrace func() e
 		os.Exit(1)
 	}
 
-	if err := cleanupTrace(); err != nil {
+	if err := observability.Tracer.Close(); err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}
