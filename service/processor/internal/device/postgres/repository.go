@@ -4,24 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/charmingruby/devicio/lib/database"
 	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
 	"github.com/jmoiron/sqlx"
 )
-
-const (
-	createRoutine = "create routine"
-)
-
-func routineQueries() map[string]string {
-	return map[string]string{
-		createRoutine: `INSERT INTO device_routines
-		(id, device_id, status, context, area, dispatched_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING *`,
-	}
-}
 
 func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRepository, error) {
 	stmts := make(map[string]*sqlx.Stmt)
@@ -30,7 +18,7 @@ func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRep
 		stmt, err := db.Preparex(statement)
 		if err != nil {
 			logger.Log.Error(fmt.Sprintf("unable to prepare the query: %s, err: %s", queryName, err.Error()))
-			return nil, ErrPreparation
+			return nil, database.ErrPreparation
 		}
 
 		stmts[queryName] = stmt
@@ -54,7 +42,7 @@ func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
 
 	if !ok {
 		logger.Log.Error(fmt.Sprintf("statement not prepared: %s", queryName))
-		return nil, ErrStatementNotPrepared
+		return nil, database.ErrStatementNotPrepared
 	}
 
 	return stmt, nil

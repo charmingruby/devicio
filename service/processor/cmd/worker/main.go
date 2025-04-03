@@ -7,13 +7,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/charmingruby/devicio/lib/database"
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/processor/config"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
 	"github.com/charmingruby/devicio/service/processor/pkg/observability"
-	"github.com/charmingruby/devicio/service/processor/pkg/pg"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -40,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := pg.New(pg.ConnectionInput{
+	db, err := database.NewPostgres(database.PostgresConnectionInput{
 		User:         cfg.DatabaseUser,
 		Password:     cfg.DatabasePassword,
 		Host:         cfg.DatabaseHost,

@@ -1,8 +1,8 @@
 package observability
 
 import (
-	"github.com/charmingruby/devicio/lib/pkg/observability"
-	"github.com/charmingruby/devicio/lib/pkg/observability/otel"
+	"github.com/charmingruby/devicio/lib/observability"
+	"github.com/charmingruby/devicio/lib/observability/otel"
 )
 
 var Tracer observability.Tracer
