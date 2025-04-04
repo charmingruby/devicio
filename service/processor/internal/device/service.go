@@ -30,10 +30,10 @@ func NewService(queue *rabbitmq.Client, repo RoutineRepository, externalAPI clie
 }
 
 func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
-	ctx, complete := observability.Tracing.Span(ctx, "service.Service.ProcessRoutine")
+	ctx, complete := observability.Tracer.Span(ctx, "service.Service.ProcessRoutine")
 	defer complete()
 
-	traceID := observability.Tracing.GetTraceIDFromContext(ctx)
+	traceID := observability.Tracer.GetTraceIDFromContext(ctx)
 
 	logger.Log.Info(fmt.Sprintf("started processing routine with traceId=%s", traceID))
 
@@ -57,7 +57,7 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 }
 
 func (s *Service) parseProcessRoutineData(ctx context.Context, b []byte) (Routine, context.Context, error) {
-	ctx, complete := observability.Tracing.Span(ctx, "service.Service.parseProcessRoutineData")
+	ctx, complete := observability.Tracer.Span(ctx, "service.Service.parseProcessRoutineData")
 	defer complete()
 
 	var p pb.DeviceRoutine

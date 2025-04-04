@@ -1,4 +1,4 @@
-package otel
+package trace
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type Tracing struct {
+type OtelTracer struct {
 	tracer  trace.Tracer
 	cleanup func() error
 }
 
-func NewTracing(serviceName string) (*Tracing, error) {
+func NewOtelTracer(serviceName string) (*OtelTracer, error) {
 	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint())
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NewTracing(serviceName string) (*Tracing, error) {
 
 	otel.SetTracerProvider(traceProvider)
 
-	t := &Tracing{
+	t := &OtelTracer{
 		tracer: otel.Tracer(serviceName),
 		cleanup: func() error {
 			return traceProvider.Shutdown(context.Background())
@@ -44,7 +44,7 @@ func NewTracing(serviceName string) (*Tracing, error) {
 	return t, nil
 }
 
-func (t *Tracing) Span(ctx context.Context, name string) (context.Context, func()) {
+func (t *OtelTracer) Span(ctx context.Context, name string) (context.Context, func()) {
 	ctx, span := t.tracer.Start(ctx, name)
 
 	complete := func() {
@@ -54,7 +54,7 @@ func (t *Tracing) Span(ctx context.Context, name string) (context.Context, func(
 	return ctx, complete
 }
 
-func (t *Tracing) GetTraceIDFromContext(ctx context.Context) string {
+func (t *OtelTracer) GetTraceIDFromContext(ctx context.Context) string {
 	span := trace.SpanFromContext(ctx)
 	if span == nil {
 		return ""
@@ -63,6 +63,6 @@ func (t *Tracing) GetTraceIDFromContext(ctx context.Context) string {
 	return span.SpanContext().TraceID().String()
 }
 
-func (t *Tracing) Close() error {
+func (t *OtelTracer) Close() error {
 	return t.cleanup()
 }

@@ -27,12 +27,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := observability.NewTracing(cfg.ServiceName); err != nil {
+	if err := observability.NewTracer(cfg.ServiceName); err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, observability.Tracing, &rabbitmq.Config{
+	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})
@@ -53,13 +53,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	repo, err := postgres.NewRoutineRepository(db, observability.Tracing)
+	repo, err := postgres.NewRoutineRepository(db, observability.Tracer)
 	if err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	externalAPI := client.NewUnstableAPI(observability.Tracing)
+	externalAPI := client.NewUnstableAPI(observability.Tracer)
 
 	svc := device.NewService(queue, repo, externalAPI)
 
@@ -87,7 +87,7 @@ func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
 		os.Exit(1)
 	}
 
-	if err := observability.Tracing.Close(); err != nil {
+	if err := observability.Tracer.Close(); err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}

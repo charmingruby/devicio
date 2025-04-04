@@ -33,17 +33,17 @@ var (
 )
 
 type UnstableAPI struct {
-	tracing observability.Tracing
+	tracer observability.Tracer
 }
 
-func NewUnstableAPI(tracing observability.Tracing) UnstableAPI {
+func NewUnstableAPI(tracer observability.Tracer) UnstableAPI {
 	return UnstableAPI{
-		tracing: tracing,
+		tracer: tracer,
 	}
 }
 
 func (a *UnstableAPI) VolatileCall(ctx context.Context) (context.Context, error) {
-	ctx, complete := a.tracing.Span(ctx, "external.UnstableAPI.VolatileCall")
+	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.VolatileCall")
 	defer complete()
 
 	ctx, err := a.simulateLatency(ctx)
@@ -60,9 +60,9 @@ func (a *UnstableAPI) VolatileCall(ctx context.Context) (context.Context, error)
 }
 
 func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, error) {
-	traceID := a.tracing.GetTraceIDFromContext(ctx)
+	traceID := a.tracer.GetTraceIDFromContext(ctx)
 
-	ctx, complete := a.tracing.Span(ctx, "external.UnstableAPI.simulateLatency")
+	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.simulateLatency")
 	defer complete()
 
 	latency := latency[rand.Intn(len(latency))]
@@ -79,10 +79,10 @@ func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, err
 }
 
 func (a *UnstableAPI) simulateErr(ctx context.Context) (context.Context, error) {
-	ctx, complete := a.tracing.Span(ctx, "external.UnstableAPI.simulateErr")
+	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.simulateErr")
 	defer complete()
 
-	traceID := a.tracing.GetTraceIDFromContext(ctx)
+	traceID := a.tracer.GetTraceIDFromContext(ctx)
 
 	shouldErr := rand.Float64() < errProbability
 
