@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,11 +19,23 @@ import (
 )
 
 func main() {
-	instrumentation.NewLogger()
-
-	cfg, err := config.New()
+	cfg, exists, err := config.New()
 	if err != nil {
-		instrumentation.Logger.Error(err.Error())
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if !exists {
+		if err := instrumentation.NewLogger(""); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		instrumentation.Logger.Warn("no config found, using default values")
+	}
+
+	if err := instrumentation.NewLogger(cfg.LogLevel); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 

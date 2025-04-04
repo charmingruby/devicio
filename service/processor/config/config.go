@@ -2,7 +2,6 @@ package config
 
 import (
 	"github.com/caarlos0/env/v6"
-	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/joho/godotenv"
 )
 
@@ -15,18 +14,19 @@ type Config struct {
 	DatabaseName      string `env:"DATABASE_NAME,required"`
 	DatabaseSSL       string `env:"DATABASE_SSL,required"`
 	ServiceName       string `env:"SERVICE_NAME,required"`
+	LogLevel          string `env:"LOG_LEVEL"`
 }
 
-func New() (Config, error) {
+func New() (Config, bool, error) {
 	if err := godotenv.Load(); err != nil {
-		instrumentation.Logger.Warn(".env file not found")
+		return Config{}, false, err
 	}
 
 	cfg := Config{}
 
 	if err := env.Parse(&cfg); err != nil {
-		return Config{}, err
+		return Config{}, false, err
 	}
 
-	return cfg, nil
+	return cfg, true, nil
 }

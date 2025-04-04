@@ -18,7 +18,10 @@ func main() {
 	concurrency := flag.Int("concurrency", 5, "Amount of workers")
 	flag.Parse()
 
-	instrumentation.NewLogger()
+	if err := instrumentation.NewLogger(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

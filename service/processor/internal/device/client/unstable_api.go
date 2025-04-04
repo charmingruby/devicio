@@ -86,7 +86,7 @@ func (a *UnstableAPI) simulateErr(ctx context.Context) (context.Context, error) 
 
 	shouldErr := rand.Float64() < errProbability
 
-	instrumentation.Logger.Info(fmt.Sprintf("should err=%t,traceID=%s", shouldErr, traceID))
+	instrumentation.Logger.Error(fmt.Sprintf("should err=%t,traceID=%s", shouldErr, traceID))
 
 	if shouldErr {
 		return ctx, ErrUnknown
