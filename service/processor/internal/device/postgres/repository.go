@@ -11,7 +11,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRepository, error) {
+func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracing) (*RoutineRepository, error) {
 	stmts := make(map[string]*sqlx.Stmt)
 
 	for queryName, statement := range routineQueries() {
@@ -33,7 +33,7 @@ func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRep
 
 type RoutineRepository struct {
 	db     *sqlx.DB
-	tracer observability.Tracer
+	tracer observability.Tracing
 	stmts  map[string]*sqlx.Stmt
 }
 

@@ -25,7 +25,7 @@ func NewService(queue *rabbitmq.Client, repo RoutineRepository) *Service {
 }
 
 func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
-	ctx, complete := observability.Tracer.Span(ctx, "service.Service.ProcessRoutine")
+	ctx, complete := observability.Tracing.Span(ctx, "service.Service.ProcessRoutine")
 	defer complete()
 
 	ctx, r, err := s.parseProcessRoutineData(ctx, msg)
@@ -41,7 +41,7 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 }
 
 func (s *Service) parseProcessRoutineData(ctx context.Context, b []byte) (context.Context, *Routine, error) {
-	ctx, complete := observability.Tracer.Span(ctx, "service.Service.parseProcessRoutineData")
+	ctx, complete := observability.Tracing.Span(ctx, "service.Service.parseProcessRoutineData")
 	defer complete()
 
 	var p pb.DeviceRoutine

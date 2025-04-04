@@ -5,15 +5,15 @@ import (
 	"github.com/charmingruby/devicio/lib/observability/otel"
 )
 
-var Tracer observability.Tracer
+var Tracing observability.Tracing
 
-func NewTracer(serviceName string) error {
-	tracer, err := otel.NewTracer(serviceName)
+func NewTracing(serviceName string) error {
+	tracing, err := otel.NewTracing(serviceName)
 	if err != nil {
 		return err
 	}
 
-	Tracer = tracer
+	Tracing = tracing
 
 	return nil
 }

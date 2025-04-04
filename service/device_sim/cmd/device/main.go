@@ -30,12 +30,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := observability.NewTracer(cfg.ServiceName); err != nil {
+	if err := observability.NewTracing(cfg.ServiceName); err != nil {
 		logger.Log.Error(err.Error())
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
+	queue, err := rabbitmq.New(logger.Log, observability.Tracing, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})

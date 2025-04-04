@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type Tracer interface {
+type Tracing interface {
 	Span(ctx context.Context, name string) (context.Context, func())
 	Close() error
 }

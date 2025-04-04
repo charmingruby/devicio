@@ -15,7 +15,7 @@ type Client struct {
 	channel *amqp.Channel
 	cfg     *Config
 	logger  *logger.Logger
-	tracer  observability.Tracer
+	tracing observability.Tracing
 }
 
 type Config struct {
@@ -23,7 +23,7 @@ type Config struct {
 	QueueName string
 }
 
-func New(logger *logger.Logger, tracer observability.Tracer, cfg *Config) (*Client, error) {
+func New(logger *logger.Logger, tracing observability.Tracing, cfg *Config) (*Client, error) {
 	conn, err := amqp.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
@@ -45,7 +45,7 @@ func New(logger *logger.Logger, tracer observability.Tracer, cfg *Config) (*Clie
 		conn:    conn,
 		channel: ch,
 		logger:  logger,
-		tracer:  tracer,
+		tracing: tracing,
 		cfg:     cfg,
 	}, nil
 }
@@ -77,9 +77,6 @@ func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
 }
 
 func (c *Client) Subscribe(ctx context.Context, handler func(context.Context, []byte) error) error {
-	ctx, complete := c.tracer.Span(ctx, "rabbitmq.Client.Subscribe")
-	defer complete()
-
 	msgs, err := c.channel.Consume(
 		c.cfg.QueueName,
 		"",    // consumer
@@ -95,7 +92,7 @@ func (c *Client) Subscribe(ctx context.Context, handler func(context.Context, []
 
 	go func() {
 		for msg := range msgs {
-			ctx, complete := c.tracer.Span(ctx, "rabbitmq.Client.Subscribe.Handler")
+			ctx, complete := c.tracing.Span(ctx, "rabbitmq.Client.Subscribe.Handler")
 
 			if err := handler(ctx, msg.Body); err != nil {
 				c.logger.Error(fmt.Sprintf("failed to handle message: %v", err))
