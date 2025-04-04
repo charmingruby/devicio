@@ -54,6 +54,15 @@ func (t *Tracing) Span(ctx context.Context, name string) (context.Context, func(
 	return ctx, complete
 }
 
+func (t *Tracing) GetTraceIDFromContext(ctx context.Context) string {
+	span := trace.SpanFromContext(ctx)
+	if span == nil {
+		return ""
+	}
+
+	return span.SpanContext().TraceID().String()
+}
+
 func (t *Tracing) Close() error {
 	return t.cleanup()
 }

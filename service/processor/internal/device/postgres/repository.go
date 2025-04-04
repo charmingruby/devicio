@@ -48,7 +48,7 @@ func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
 	return stmt, nil
 }
 
-func (r *RoutineRepository) Store(ctx context.Context, routine *device.Routine) (context.Context, error) {
+func (r *RoutineRepository) Store(ctx context.Context, routine device.Routine) (context.Context, error) {
 	ctx, complete := r.tracer.Span(ctx, "repository.RoutineRepository.Store")
 	defer complete()
 

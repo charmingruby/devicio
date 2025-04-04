@@ -11,6 +11,7 @@ import (
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/processor/config"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
+	"github.com/charmingruby/devicio/service/processor/internal/device/client"
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/logger"
 	"github.com/charmingruby/devicio/service/processor/pkg/observability"
@@ -58,7 +59,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	svc := device.NewService(queue, repo)
+	externalAPI := client.NewUnstableAPI(observability.Tracing)
+
+	svc := device.NewService(queue, repo, externalAPI)
 
 	go func() {
 		if err := queue.Subscribe(context.Background(), svc.ProcessRoutine); err != nil {
