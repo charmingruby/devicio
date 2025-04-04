@@ -13,31 +13,30 @@ import (
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/internal/device/client"
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
-	"github.com/charmingruby/devicio/service/processor/pkg/logger"
-	"github.com/charmingruby/devicio/service/processor/pkg/observability"
+	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/jmoiron/sqlx"
 )
 
 func main() {
-	logger.New()
+	instrumentation.NewLogger()
 
 	cfg, err := config.New()
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	if err := observability.NewTracer(cfg.ServiceName); err != nil {
-		logger.Log.Error(err.Error())
+	if err := instrumentation.NewTracer(cfg.ServiceName); err != nil {
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
+	queue, err := rabbitmq.New(instrumentation.Logger, instrumentation.Tracer, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
@@ -49,23 +48,23 @@ func main() {
 		SSL:          cfg.DatabaseSSL,
 	})
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	repo, err := postgres.NewRoutineRepository(db, observability.Tracer)
+	repo, err := postgres.NewRoutineRepository(db, instrumentation.Tracer)
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	externalAPI := client.NewUnstableAPI(observability.Tracer)
+	externalAPI := client.NewUnstableAPI(instrumentation.Tracer)
 
 	svc := device.NewService(queue, repo, externalAPI)
 
 	go func() {
 		if err := queue.Subscribe(context.Background(), svc.ProcessRoutine); err != nil {
-			logger.Log.Error(err.Error())
+			instrumentation.Logger.Error(err.Error())
 			os.Exit(1)
 		}
 	}()
@@ -78,21 +77,21 @@ func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
 	<-stopChan
-	logger.Log.Info("shutting down gracefully...")
+	instrumentation.Logger.Info("shutting down gracefully...")
 
 	queue.Close()
 
 	if err := db.Close(); err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	if err := observability.Tracer.Close(); err != nil {
-		logger.Log.Error(err.Error())
+	if err := instrumentation.Tracer.Close(); err != nil {
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	time.Sleep(2 * time.Second)
 
-	logger.Log.Info("shutdown complete")
+	instrumentation.Logger.Info("shutdown complete")
 }

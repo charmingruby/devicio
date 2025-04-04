@@ -7,7 +7,7 @@ import (
 	"github.com/charmingruby/devicio/lib/database"
 	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
-	"github.com/charmingruby/devicio/service/processor/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -17,7 +17,7 @@ func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRep
 	for queryName, statement := range routineQueries() {
 		stmt, err := db.Preparex(statement)
 		if err != nil {
-			logger.Log.Error(fmt.Sprintf("unable to prepare the query: %s, err: %s", queryName, err.Error()))
+			instrumentation.Logger.Error(fmt.Sprintf("unable to prepare the query: %s, err: %s", queryName, err.Error()))
 			return nil, database.ErrPreparation
 		}
 
@@ -41,7 +41,7 @@ func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
 	stmt, ok := r.stmts[queryName]
 
 	if !ok {
-		logger.Log.Error(fmt.Sprintf("statement not prepared: %s", queryName))
+		instrumentation.Logger.Error(fmt.Sprintf("statement not prepared: %s", queryName))
 		return nil, database.ErrStatementNotPrepared
 	}
 

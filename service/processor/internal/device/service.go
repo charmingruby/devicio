@@ -10,8 +10,7 @@ import (
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/lib/proto/gen/pb"
 	"github.com/charmingruby/devicio/service/processor/internal/device/client"
-	"github.com/charmingruby/devicio/service/processor/pkg/logger"
-	"github.com/charmingruby/devicio/service/processor/pkg/observability"
+	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -30,19 +29,19 @@ func NewService(queue *rabbitmq.Client, repo RoutineRepository, externalAPI clie
 }
 
 func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
-	ctx, complete := observability.Tracer.Span(ctx, "service.Service.ProcessRoutine")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "service.Service.ProcessRoutine")
 	defer complete()
 
-	traceID := observability.Tracer.GetTraceIDFromContext(ctx)
+	traceID := instrumentation.Tracer.GetTraceIDFromContext(ctx)
 
-	logger.Log.Info(fmt.Sprintf("started processing routine with traceId=%s", traceID))
+	instrumentation.Logger.Info(fmt.Sprintf("started processing routine with traceId=%s", traceID))
 
 	r, ctx, err := s.parseProcessRoutineData(ctx, msg)
 	if err != nil {
 		return err
 	}
 
-	logger.Log.Info(fmt.Sprintf("parsed routine with id=%s,traceId=%s", r.ID, traceID))
+	instrumentation.Logger.Info(fmt.Sprintf("parsed routine with id=%s,traceId=%s", r.ID, traceID))
 
 	ctx, err = s.externalAPI.VolatileCall(ctx)
 	if err != nil {
@@ -57,7 +56,7 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 }
 
 func (s *Service) parseProcessRoutineData(ctx context.Context, b []byte) (Routine, context.Context, error) {
-	ctx, complete := observability.Tracer.Span(ctx, "service.Service.parseProcessRoutineData")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "service.Service.parseProcessRoutineData")
 	defer complete()
 
 	var p pb.DeviceRoutine

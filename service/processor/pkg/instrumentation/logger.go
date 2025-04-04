@@ -1,4 +1,4 @@
-package logger
+package instrumentation
 
 import (
 	"log/slog"
@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	Log *slog.Logger
+	Logger *slog.Logger
 )
 
-func New() {
+func NewLogger() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	Log = logger
+	Logger = logger
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/charmingruby/devicio/lib/logger"
 	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/streadway/amqp"
 	"google.golang.org/protobuf/proto"
@@ -14,7 +13,7 @@ type Client struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	cfg     *Config
-	logger  *logger.Logger
+	logger  *observability.Logger
 	tracer  observability.Tracer
 }
 
@@ -23,7 +22,7 @@ type Config struct {
 	QueueName string
 }
 
-func New(logger *logger.Logger, tracer observability.Tracer, cfg *Config) (*Client, error) {
+func New(logger *observability.Logger, tracer observability.Tracer, cfg *Config) (*Client, error) {
 	conn, err := amqp.Dial(cfg.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)

@@ -1,4 +1,4 @@
-package observability
+package instrumentation
 
 import (
 	"github.com/charmingruby/devicio/lib/observability"

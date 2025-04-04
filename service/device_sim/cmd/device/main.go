@@ -10,8 +10,7 @@ import (
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/service/device_sim/config"
 	"github.com/charmingruby/devicio/service/device_sim/internal/device"
-	"github.com/charmingruby/devicio/service/device_sim/pkg/logger"
-	"github.com/charmingruby/devicio/service/device_sim/pkg/observability"
+	"github.com/charmingruby/devicio/service/device_sim/pkg/instrumentation"
 )
 
 func main() {
@@ -19,35 +18,35 @@ func main() {
 	concurrency := flag.Int("concurrency", 5, "Amount of workers")
 	flag.Parse()
 
-	logger.New()
+	instrumentation.NewLogger()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	cfg, err := config.New()
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	if err := observability.NewTracer(cfg.ServiceName); err != nil {
-		logger.Log.Error(err.Error())
+	if err := instrumentation.NewTracer(cfg.ServiceName); err != nil {
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
-	queue, err := rabbitmq.New(logger.Log, observability.Tracer, &rabbitmq.Config{
+	queue, err := rabbitmq.New(instrumentation.Logger, instrumentation.Tracer, &rabbitmq.Config{
 		URL:       cfg.RabbitMQURL,
 		QueueName: cfg.RabbitMQQueueName,
 	})
 	if err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	svc := device.NewService(queue)
 
 	if err := runWorkerPool(ctx, svc, *recordsAmount, *concurrency); err != nil {
-		logger.Log.Error(err.Error())
+		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
@@ -83,7 +82,7 @@ func runWorkerPool(ctx context.Context, svc *device.Service, recordsAmount, conc
 	for result := range results {
 		if result.err != nil {
 			errorCount++
-			logger.Log.Error(result.err.Error())
+			instrumentation.Logger.Error(result.err.Error())
 		}
 	}
 

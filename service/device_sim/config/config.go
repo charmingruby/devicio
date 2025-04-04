@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/caarlos0/env/v6"
-	"github.com/charmingruby/devicio/service/device_sim/pkg/logger"
+	"github.com/charmingruby/devicio/service/device_sim/pkg/instrumentation"
 	"github.com/joho/godotenv"
 )
 
@@ -14,7 +14,7 @@ type Config struct {
 
 func New() (Config, error) {
 	if err := godotenv.Load(); err != nil {
-		logger.Log.Warn(".env file not found")
+		instrumentation.Logger.Warn(".env file not found")
 	}
 
 	cfg := Config{}

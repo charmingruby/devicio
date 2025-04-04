@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/charmingruby/devicio/lib/observability"
-	"github.com/charmingruby/devicio/service/processor/pkg/logger"
+	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 )
 
 const (
@@ -67,7 +67,7 @@ func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, err
 
 	latency := latency[rand.Intn(len(latency))]
 
-	logger.Log.Info(fmt.Sprintf("got latency latency=%dms,traceId=%s,", latency, traceID))
+	instrumentation.Logger.Info(fmt.Sprintf("got latency latency=%dms,traceId=%s,", latency, traceID))
 
 	time.Sleep(time.Duration(latency) * time.Millisecond)
 
@@ -86,7 +86,7 @@ func (a *UnstableAPI) simulateErr(ctx context.Context) (context.Context, error) 
 
 	shouldErr := rand.Float64() < errProbability
 
-	logger.Log.Info(fmt.Sprintf("should err=%t,traceID=%s", shouldErr, traceID))
+	instrumentation.Logger.Info(fmt.Sprintf("should err=%t,traceID=%s", shouldErr, traceID))
 
 	if shouldErr {
 		return ctx, ErrUnknown
