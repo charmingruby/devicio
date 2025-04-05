@@ -10,13 +10,6 @@ var (
 	Logger *slog.Logger
 )
 
-func NewLogger(lvl string) error {
-	logger, err := log.NewSlogLogger(lvl)
-	if err != nil {
-		return err
-	}
-
-	Logger = logger
-
-	return nil
+func NewLogger(lvl string) {
+	Logger = log.NewSlogLogger(lvl)
 }

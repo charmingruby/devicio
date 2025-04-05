@@ -58,10 +58,13 @@ func (c *Client) Close() {
 	}
 }
 
-func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
+func (c *Client) Publish(ctx context.Context, msg proto.Message) (context.Context, error) {
+	ctx, complete := c.tracer.Span(ctx, "rabbitmq.Client.Publish")
+	defer complete()
+
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal protobuf message: %w", err)
+		return ctx, fmt.Errorf("failed to marshal protobuf message: %w", err)
 	}
 
 	err = c.channel.Publish("", c.cfg.QueueName, false, false, amqp.Publishing{
@@ -69,10 +72,10 @@ func (c *Client) Publish(ctx context.Context, msg proto.Message) error {
 		Body:        data,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to publish message: %w", err)
+		return ctx, fmt.Errorf("failed to publish message: %w", err)
 	}
 
-	return nil
+	return ctx, nil
 }
 
 func (c *Client) Subscribe(ctx context.Context, handler func(context.Context, []byte) error) error {

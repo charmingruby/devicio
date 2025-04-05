@@ -5,11 +5,8 @@ import (
 	"os"
 )
 
-func NewSlogLogger(level string) (*slog.Logger, error) {
-	lvl, err := parseLevel(level)
-	if err != nil {
-		return nil, err
-	}
+func NewSlogLogger(level string) *slog.Logger {
+	lvl := parseLevel(level)
 
 	opts := &slog.HandlerOptions{
 		Level: lvl,
@@ -18,20 +15,20 @@ func NewSlogLogger(level string) (*slog.Logger, error) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
 
-	return logger, nil
+	return logger
 }
 
-func parseLevel(level string) (slog.Level, error) {
+func parseLevel(level string) slog.Level {
 	switch level {
 	case "debug":
-		return slog.LevelDebug, nil
+		return slog.LevelDebug
 	case "info":
-		return slog.LevelInfo, nil
+		return slog.LevelInfo
 	case "warn":
-		return slog.LevelWarn, nil
+		return slog.LevelWarn
 	case "error":
-		return slog.LevelError, nil
+		return slog.LevelError
 	default:
-		return slog.LevelInfo, nil
+		return slog.LevelInfo
 	}
 }

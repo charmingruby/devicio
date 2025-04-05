@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	pb "github.com/charmingruby/devicio/lib/proto/gen/pb"
+	"github.com/charmingruby/devicio/service/device_sim/pkg/instrumentation"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -36,6 +37,11 @@ func NewService(queue *rabbitmq.Client) *Service {
 }
 
 func (s *Service) DispatchRoutineMessage(ctx context.Context, device Device) error {
+	ctx, complete := instrumentation.Tracer.Span(ctx, "device.DispatchRoutineMessage")
+	defer complete()
+
+	instrumentation.Logger.Debug("Dispatching routine message", "device_id", device.ID)
+
 	now := time.Now()
 	timestamp := timestamppb.New(now)
 
@@ -48,7 +54,14 @@ func (s *Service) DispatchRoutineMessage(ctx context.Context, device Device) err
 		DispatchedAt: timestamp,
 	}
 
-	return s.queue.Publish(ctx, routine)
+	if _, err := s.queue.Publish(ctx, routine); err != nil {
+		instrumentation.Logger.Warn("Failed to publish routine message", "error", err, "device_id", device.ID)
+		return err
+	}
+
+	instrumentation.Logger.Debug("Routine message dispatched successfully", "device_id", device.ID)
+
+	return nil
 }
 
 func getRandomDiagnostic() string {

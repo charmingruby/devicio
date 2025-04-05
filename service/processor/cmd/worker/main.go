@@ -26,18 +26,12 @@ func main() {
 	}
 
 	if !exists {
-		if err := instrumentation.NewLogger(""); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		instrumentation.NewLogger("")
 
 		instrumentation.Logger.Warn("no config found, using default values")
 	}
 
-	if err := instrumentation.NewLogger(cfg.Base.LogLevel); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	instrumentation.NewLogger(cfg.Base.LogLevel)
 
 	if err := instrumentation.NewTracer(cfg.ServiceName); err != nil {
 		instrumentation.Logger.Error(err.Error())
