@@ -34,7 +34,7 @@ func main() {
 		instrumentation.Logger.Warn("no config found, using default values")
 	}
 
-	if err := instrumentation.NewLogger(cfg.LogLevel); err != nil {
+	if err := instrumentation.NewLogger(cfg.Base.LogLevel); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -45,8 +45,8 @@ func main() {
 	}
 
 	queue, err := rabbitmq.New(instrumentation.Logger, instrumentation.Tracer, &rabbitmq.Config{
-		URL:       cfg.RabbitMQURL,
-		QueueName: cfg.RabbitMQQueueName,
+		URL:       cfg.Custom.RabbitMQURL,
+		QueueName: cfg.Custom.RabbitMQQueueName,
 	})
 	if err != nil {
 		instrumentation.Logger.Error(err.Error())
@@ -54,11 +54,11 @@ func main() {
 	}
 
 	db, err := database.NewPostgres(database.PostgresConnectionInput{
-		User:         cfg.DatabaseUser,
-		Password:     cfg.DatabasePassword,
-		Host:         cfg.DatabaseHost,
-		DatabaseName: cfg.DatabaseName,
-		SSL:          cfg.DatabaseSSL,
+		User:         cfg.Custom.DatabaseUser,
+		Password:     cfg.Custom.DatabasePassword,
+		Host:         cfg.Custom.DatabaseHost,
+		DatabaseName: cfg.Custom.DatabaseName,
+		SSL:          cfg.Custom.DatabaseSSL,
 	})
 	if err != nil {
 		instrumentation.Logger.Error(err.Error())

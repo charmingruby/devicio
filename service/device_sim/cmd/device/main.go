@@ -18,7 +18,22 @@ func main() {
 	concurrency := flag.Int("concurrency", 5, "Amount of workers")
 	flag.Parse()
 
-	if err := instrumentation.NewLogger(); err != nil {
+	cfg, exists, err := config.New()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if !exists {
+		if err := instrumentation.NewLogger(cfg.Base.LogLevel); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		instrumentation.Logger.Warn("no config found, using default values")
+	}
+
+	if err := instrumentation.NewLogger(cfg.Base.LogLevel); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -26,20 +41,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cfg, err := config.New()
-	if err != nil {
-		instrumentation.Logger.Error(err.Error())
-		os.Exit(1)
-	}
-
 	if err := instrumentation.NewTracer(cfg.ServiceName); err != nil {
 		instrumentation.Logger.Error(err.Error())
 		os.Exit(1)
 	}
 
 	queue, err := rabbitmq.New(instrumentation.Logger, instrumentation.Tracer, &rabbitmq.Config{
-		URL:       cfg.RabbitMQURL,
-		QueueName: cfg.RabbitMQQueueName,
+		URL:       cfg.Custom.RabbitMQURL,
+		QueueName: cfg.Custom.RabbitMQQueueName,
 	})
 	if err != nil {
 		instrumentation.Logger.Error(err.Error())

@@ -1,11 +1,10 @@
 package config
 
 import (
-	"github.com/caarlos0/env/v6"
-	"github.com/joho/godotenv"
+	"github.com/charmingruby/devicio/lib/config"
 )
 
-type Config struct {
+type CustomConfig struct {
 	RabbitMQURL       string `env:"RABBITMQ_URL"`
 	RabbitMQQueueName string `env:"RABBITMQ_QUEUE_NAME"`
 	DatabaseUser      string `env:"DATABASE_USER,required"`
@@ -13,20 +12,8 @@ type Config struct {
 	DatabaseHost      string `env:"DATABASE_HOST,required"`
 	DatabaseName      string `env:"DATABASE_NAME,required"`
 	DatabaseSSL       string `env:"DATABASE_SSL,required"`
-	ServiceName       string `env:"SERVICE_NAME,required"`
-	LogLevel          string `env:"LOG_LEVEL"`
 }
 
-func New() (Config, bool, error) {
-	if err := godotenv.Load(); err != nil {
-		return Config{}, false, err
-	}
-
-	cfg := Config{}
-
-	if err := env.Parse(&cfg); err != nil {
-		return Config{}, false, err
-	}
-
-	return cfg, true, nil
+func New() (config.Config[CustomConfig], bool, error) {
+	return config.New[CustomConfig]()
 }

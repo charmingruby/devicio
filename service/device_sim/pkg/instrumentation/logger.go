@@ -10,8 +10,8 @@ var (
 	Logger *slog.Logger
 )
 
-func NewLogger() error {
-	logger, err := log.NewSlogLogger("")
+func NewLogger(lvl string) error {
+	logger, err := log.NewSlogLogger(lvl)
 	if err != nil {
 		return err
 	}
