@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -67,7 +66,7 @@ func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, err
 
 	latency := latency[rand.Intn(len(latency))]
 
-	instrumentation.Logger.Info(fmt.Sprintf("got latency latency=%dms,traceId=%s,", latency, traceID))
+	instrumentation.Logger.Debug("Simulating latency", "latency", latency, "traceId", traceID)
 
 	time.Sleep(time.Duration(latency) * time.Millisecond)
 
@@ -86,7 +85,7 @@ func (a *UnstableAPI) simulateErr(ctx context.Context) (context.Context, error) 
 
 	shouldErr := rand.Float64() < errProbability
 
-	instrumentation.Logger.Error(fmt.Sprintf("should err=%t,traceID=%s", shouldErr, traceID))
+	instrumentation.Logger.Debug("Simulating error", "shouldErr", shouldErr, "traceId", traceID)
 
 	if shouldErr {
 		return ctx, ErrUnknown

@@ -2,7 +2,6 @@ package device
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/charmingruby/devicio/lib/core/id"
@@ -34,23 +33,27 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 
 	traceID := instrumentation.Tracer.GetTraceIDFromContext(ctx)
 
-	instrumentation.Logger.Info(fmt.Sprintf("started processing routine with traceId=%s", traceID))
+	instrumentation.Logger.Debug("Starting to process routine", "traceId", traceID)
 
 	r, ctx, err := s.parseProcessRoutineData(ctx, msg)
 	if err != nil {
 		return err
 	}
 
-	instrumentation.Logger.Info(fmt.Sprintf("parsed routine with id=%s,traceId=%s", r.ID, traceID))
+	instrumentation.Logger.Debug("Processing routine", "traceId", traceID, "routineId", r.ID)
 
 	ctx, err = s.externalAPI.VolatileCall(ctx)
 	if err != nil {
 		return err
 	}
 
+	instrumentation.Logger.Debug("External API call completed", "traceId", traceID)
+
 	if _, err := s.repo.Store(ctx, r); err != nil {
 		return err
 	}
+
+	instrumentation.Logger.Debug("Stored routine", "traceId", traceID, "routineId", r.ID)
 
 	return nil
 }
