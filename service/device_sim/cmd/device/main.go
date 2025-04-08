@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
 	"github.com/charmingruby/devicio/lib/observability"
@@ -81,8 +83,27 @@ func main() {
 
 	instrumentation.Logger.Info("Worker pool execution completed successfully")
 
-	// Keep the main thread alive to see the traces in the UI
-	select {}
+	gracefulShutdown(queue)
+}
+
+func gracefulShutdown(queue *rabbitmq.Client) {
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
+	<-stopChan
+
+	instrumentation.Logger.Info("Shutting down gracefully")
+
+	queue.Close()
+
+	instrumentation.Logger.Info("RabbitMQ connection closed")
+
+	if err := instrumentation.Tracer.Close(); err != nil {
+		instrumentation.Logger.Error("Failed to close tracing system", "error", err)
+	}
+
+	instrumentation.Logger.Info("Tracing system closed")
+
+	os.Exit(0)
 }
 
 func runWorkerPool(svc *device.Service, recordsAmount, concurrency int) error {

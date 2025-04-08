@@ -31,12 +31,14 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 	ctx, complete := instrumentation.Tracer.Span(ctx, "service.Service.ProcessRoutine")
 	defer complete()
 
+	startTime := time.Now()
 	traceID := instrumentation.Tracer.GetTraceIDFromContext(ctx)
 
 	instrumentation.Logger.Debug("Starting to process routine", "traceId", traceID)
 
 	r, ctx, err := s.parseProcessRoutineData(ctx, msg)
 	if err != nil {
+		instrumentation.ErrorCounter.WithLabelValues("parse_error").Inc()
 		return err
 	}
 
@@ -44,16 +46,24 @@ func (s *Service) ProcessRoutine(ctx context.Context, msg []byte) error {
 
 	ctx, err = s.externalAPI.VolatileCall(ctx)
 	if err != nil {
+		instrumentation.ErrorCounter.WithLabelValues("api_error").Inc()
 		return err
 	}
 
 	instrumentation.Logger.Debug("External API call completed", "traceId", traceID)
 
 	if _, err := s.repo.Store(ctx, r); err != nil {
+		instrumentation.ErrorCounter.WithLabelValues("store_error").Inc()
 		return err
 	}
 
 	instrumentation.Logger.Debug("Stored routine", "traceId", traceID, "routineId", r.ID)
+
+	// Record metrics
+	instrumentation.MessagesProcessedCounter.Inc()
+	processingTime := time.Since(startTime).Seconds()
+	instrumentation.ProcessingTimeHistogram.Observe(processingTime)
+	instrumentation.QueueLatencyGauge.Set(time.Since(r.DispatchedAt).Seconds())
 
 	return nil
 }

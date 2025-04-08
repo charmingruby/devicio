@@ -16,7 +16,7 @@ const (
 	highLatency
 	unreliableLatency
 
-	errProbability = 0.2
+	errProbability = 0.1
 )
 
 var (

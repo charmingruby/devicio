@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/charmingruby/devicio/lib/database"
 	"github.com/charmingruby/devicio/lib/messaging/rabbitmq"
@@ -16,6 +16,8 @@ import (
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -91,6 +93,11 @@ func main() {
 
 	instrumentation.Logger.Info("Subscribing to RabbitMQ queue", "queue", cfg.Custom.RabbitMQQueueName)
 
+	prometheus.MustRegister(instrumentation.MessagesProcessedCounter)
+	prometheus.MustRegister(instrumentation.ProcessingTimeHistogram)
+	prometheus.MustRegister(instrumentation.ErrorCounter)
+	prometheus.MustRegister(instrumentation.QueueLatencyGauge)
+
 	go func() {
 		if err := queue.Subscribe(context.Background(), svc.ProcessRoutine); err != nil {
 			instrumentation.Logger.Error("Failed to subscribe to RabbitMQ queue", "error", err)
@@ -99,6 +106,16 @@ func main() {
 	}()
 
 	instrumentation.Logger.Info("Subscribed to RabbitMQ queue successfully")
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(":2112", nil); err != nil {
+			instrumentation.Logger.Error("Failed to start Prometheus metrics server", "error", err)
+			os.Exit(1)
+		}
+	}()
+
+	instrumentation.Logger.Info("Prometheus metrics server started on :2112")
 
 	gracefulShutdown(queue, db)
 }
@@ -133,8 +150,6 @@ func gracefulShutdown(queue *rabbitmq.Client, db *sqlx.DB) {
 	}
 
 	instrumentation.Logger.Info("Tracing system closed successfully")
-
-	time.Sleep(2 * time.Second)
 
 	instrumentation.Logger.Info("Gracefully shutdown")
 }
