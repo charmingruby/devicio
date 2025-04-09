@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"github.com/charmingruby/devicio/lib/database"
-	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/charmingruby/devicio/service/processor/internal/device"
 	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/jmoiron/sqlx"
 )
 
-func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRepository, error) {
+func NewRoutineRepository(db *sqlx.DB) (*RoutineRepository, error) {
 	stmts := make(map[string]*sqlx.Stmt)
 
 	for queryName, statement := range routineQueries() {
@@ -25,16 +24,14 @@ func NewRoutineRepository(db *sqlx.DB, tracer observability.Tracer) (*RoutineRep
 	}
 
 	return &RoutineRepository{
-		db:     db,
-		tracer: tracer,
-		stmts:  stmts,
+		db:    db,
+		stmts: stmts,
 	}, nil
 }
 
 type RoutineRepository struct {
-	db     *sqlx.DB
-	tracer observability.Tracer
-	stmts  map[string]*sqlx.Stmt
+	db    *sqlx.DB
+	stmts map[string]*sqlx.Stmt
 }
 
 func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
@@ -49,7 +46,7 @@ func (r *RoutineRepository) statement(queryName string) (*sqlx.Stmt, error) {
 }
 
 func (r *RoutineRepository) Store(ctx context.Context, routine device.Routine) (context.Context, error) {
-	ctx, complete := r.tracer.Span(ctx, "repository.RoutineRepository.Store")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "repository.RoutineRepository.Store")
 	defer complete()
 
 	stmt, err := r.statement(createRoutine)

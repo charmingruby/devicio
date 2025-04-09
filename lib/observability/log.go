@@ -1,7 +1,5 @@
 package observability
 
-import "log/slog"
-
 const (
 	LOG_LEVEL_DEBUG   = "debug"
 	LOG_LEVEL_INFO    = "info"
@@ -10,4 +8,9 @@ const (
 	LOG_LEVEL_DEFAULT = LOG_LEVEL_INFO
 )
 
-type Logger = slog.Logger
+type Logger interface {
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+}

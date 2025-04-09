@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 )
 
@@ -32,17 +31,14 @@ var (
 )
 
 type UnstableAPI struct {
-	tracer observability.Tracer
 }
 
-func NewUnstableAPI(tracer observability.Tracer) UnstableAPI {
-	return UnstableAPI{
-		tracer: tracer,
-	}
+func NewUnstableAPI() UnstableAPI {
+	return UnstableAPI{}
 }
 
 func (a *UnstableAPI) VolatileCall(ctx context.Context) (context.Context, error) {
-	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.VolatileCall")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "external.UnstableAPI.VolatileCall")
 	defer complete()
 
 	ctx, err := a.simulateLatency(ctx)
@@ -59,9 +55,9 @@ func (a *UnstableAPI) VolatileCall(ctx context.Context) (context.Context, error)
 }
 
 func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, error) {
-	traceID := a.tracer.GetTraceIDFromContext(ctx)
+	traceID := instrumentation.Tracer.GetTraceIDFromContext(ctx)
 
-	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.simulateLatency")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "external.UnstableAPI.simulateLatency")
 	defer complete()
 
 	latency := latency[rand.Intn(len(latency))]
@@ -78,10 +74,10 @@ func (a *UnstableAPI) simulateLatency(ctx context.Context) (context.Context, err
 }
 
 func (a *UnstableAPI) simulateErr(ctx context.Context) (context.Context, error) {
-	ctx, complete := a.tracer.Span(ctx, "external.UnstableAPI.simulateErr")
+	ctx, complete := instrumentation.Tracer.Span(ctx, "external.UnstableAPI.simulateErr")
 	defer complete()
 
-	traceID := a.tracer.GetTraceIDFromContext(ctx)
+	traceID := instrumentation.Tracer.GetTraceIDFromContext(ctx)
 
 	shouldErr := rand.Float64() < errProbability
 

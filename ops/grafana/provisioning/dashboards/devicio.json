@@ -87,7 +87,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(devicio_messages_processed_total[5m])",
+                    "expr": "rate(messages_processed[5m])",
                     "interval": "",
                     "legendFormat": "Messages per second",
                     "refId": "A"
@@ -155,7 +155,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(devicio_processing_time_seconds_sum[5m]) / rate(devicio_processing_time_seconds_count[5m])",
+                    "expr": "rate(processing_time_sum[5m]) / rate(processing_time_count[5m])",
                     "interval": "",
                     "legendFormat": "Average Processing Time",
                     "refId": "A"
@@ -242,7 +242,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(devicio_errors_total{error_type=\"parse_error\"}[5m])",
+                    "expr": "rate(errors{error_type=\"parse_error\"}[5m])",
                     "interval": "",
                     "legendFormat": "Parse Error",
                     "refId": "A"
@@ -252,7 +252,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(devicio_errors_total{error_type=\"api_error\"}[5m])",
+                    "expr": "rate(errors{error_type=\"api_error\"}[5m])",
                     "interval": "",
                     "legendFormat": "API Error",
                     "refId": "B"
@@ -262,7 +262,7 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(devicio_errors_total{error_type=\"store_error\"}[5m])",
+                    "expr": "rate(errors{error_type=\"store_error\"}[5m])",
                     "interval": "",
                     "legendFormat": "Store Error",
                     "refId": "C"

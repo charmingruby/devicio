@@ -12,6 +12,7 @@ type CustomConfig struct {
 	DatabaseHost      string `env:"DATABASE_HOST,required"`
 	DatabaseName      string `env:"DATABASE_NAME,required"`
 	DatabaseSSL       string `env:"DATABASE_SSL,required"`
+	MetricsPort       string `env:"METRICS_PORT,required"`
 }
 
 func New() (config.Config[CustomConfig], bool, error) {

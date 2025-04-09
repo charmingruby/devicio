@@ -1,13 +1,12 @@
 package instrumentation
 
 import (
-	"log/slog"
-
+	"github.com/charmingruby/devicio/lib/observability"
 	"github.com/charmingruby/devicio/lib/observability/log"
 )
 
 var (
-	Logger *slog.Logger
+	Logger observability.Logger
 )
 
 func NewLogger(lvl string) {

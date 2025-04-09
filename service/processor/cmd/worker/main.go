@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,8 +15,6 @@ import (
 	"github.com/charmingruby/devicio/service/processor/internal/device/postgres"
 	"github.com/charmingruby/devicio/service/processor/pkg/instrumentation"
 	"github.com/jmoiron/sqlx"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -42,6 +39,12 @@ func main() {
 
 		instrumentation.Logger.Info("New log level successfully configured", "new_level", cfg.Base.LogLevel)
 	}
+
+	instrumentation.Logger.Info("Initializing metrics")
+
+	instrumentation.NewMeter()
+
+	instrumentation.Logger.Info("Metrics initialized successfully")
 
 	instrumentation.Logger.Info("Initializing tracing system")
 
@@ -81,22 +84,17 @@ func main() {
 
 	instrumentation.Logger.Info("Postgres connection established successfully")
 
-	repo, err := postgres.NewRoutineRepository(db, instrumentation.Tracer)
+	repo, err := postgres.NewRoutineRepository(db)
 	if err != nil {
 		instrumentation.Logger.Error("Failed to create routine repository", "error", err)
 		os.Exit(1)
 	}
 
-	externalAPI := client.NewUnstableAPI(instrumentation.Tracer)
+	externalAPI := client.NewUnstableAPI()
 
 	svc := device.NewService(queue, repo, externalAPI)
 
 	instrumentation.Logger.Info("Subscribing to RabbitMQ queue", "queue", cfg.Custom.RabbitMQQueueName)
-
-	prometheus.MustRegister(instrumentation.MessagesProcessedCounter)
-	prometheus.MustRegister(instrumentation.ProcessingTimeHistogram)
-	prometheus.MustRegister(instrumentation.ErrorCounter)
-	prometheus.MustRegister(instrumentation.QueueLatencyGauge)
 
 	go func() {
 		if err := queue.Subscribe(context.Background(), svc.ProcessRoutine); err != nil {
@@ -108,8 +106,7 @@ func main() {
 	instrumentation.Logger.Info("Subscribed to RabbitMQ queue successfully")
 
 	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		if err := http.ListenAndServe(":2112", nil); err != nil {
+		if err := instrumentation.RunMetricsServer(cfg.Custom.MetricsPort); err != nil {
 			instrumentation.Logger.Error("Failed to start Prometheus metrics server", "error", err)
 			os.Exit(1)
 		}

@@ -5,7 +5,12 @@ import (
 	"os"
 )
 
-func NewSlogLogger(level string) *slog.Logger {
+type SlogLogger struct {
+	logger *slog.Logger
+	level  slog.Level
+}
+
+func NewSlogLogger(level string) *SlogLogger {
 	lvl := parseLevel(level)
 
 	opts := &slog.HandlerOptions{
@@ -15,7 +20,26 @@ func NewSlogLogger(level string) *slog.Logger {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
 
-	return logger
+	return &SlogLogger{
+		logger: logger,
+		level:  lvl,
+	}
+}
+
+func (l *SlogLogger) Debug(msg string, args ...any) {
+	l.logger.Debug(msg, args...)
+}
+
+func (l *SlogLogger) Info(msg string, args ...any) {
+	l.logger.Info(msg, args...)
+}
+
+func (l *SlogLogger) Warn(msg string, args ...any) {
+	l.logger.Warn(msg, args...)
+}
+
+func (l *SlogLogger) Error(msg string, args ...any) {
+	l.logger.Error(msg, args...)
 }
 
 func parseLevel(level string) slog.Level {
